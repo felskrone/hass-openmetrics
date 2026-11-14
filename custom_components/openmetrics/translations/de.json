@@ -133,6 +133,35 @@
             },
             "virtual_resources": {
                 "name": "Virtuelle Ressourcen"
+            },
+            "wifi_signal_dbm": {
+                "name": "WLAN-Signal",
+                "state_attributes": {
+                    "wifi_ssid": {
+                        "name": "SSID"
+                    },
+                    "wifi_bssid": {
+                        "name": "BSSID"
+                    }
+                }
+            },
+            "relay_state": {
+                "name": "Relais {relay} Status"
+            },
+            "voltage_volts": {
+                "name": "Spannung"
+            },
+            "current_amperes": {
+                "name": "Stromstärke"
+            },
+            "power_watts": {
+                "name": "Wirkleistung"
+            },
+            "energy_daily_kwh": {
+                "name": "Energie heute"
+            },
+            "energy_total_kwh": {
+                "name": "Energie gesamt"
             }
         }
     },
@@ -174,7 +203,14 @@
                 "virtual_resource_image_update_info": "Virtuelle Ressourcen: Image-Update Informationen",
                 "virtual_resource_status": "Virtuelle Ressourcen: Status",
                 "virtual_resource_uptime": "Virtuelle Ressourcen: Laufzeit",
-                "virtual_resources": "Virtuelle Ressourcen"
+                "virtual_resources": "Virtuelle Ressourcen",
+                "wifi_signal_dbm": "WLAN-Signal",
+                "relay_state": "Relais-Status",
+                "voltage_volts": "Spannung",
+                "current_amperes": "Stromstärke",
+                "power_watts": "Wirkleistung",
+                "energy_daily_kwh": "Energie heute",
+                "energy_total_kwh": "Energie gesamt"
             }
         }
     }

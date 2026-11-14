@@ -33,6 +33,7 @@ from .cadvisor import PROVIDER_FILTERS as CADVISOR_PROVIDER_FILTERS
 from .node_exporter import (
     PROVIDER_FILTERS as NODE_EXPORTER_PROVIDER_FILTERS,
 )
+from .tasmota import PROVIDER_FILTERS as TASMOTA_PROVIDER_FILTERS
 
 
 class GenericProvider(MetricsProvider):
@@ -147,6 +148,7 @@ class GenericProvider(MetricsProvider):
         self.provider_filters: list[MetricFilter] = []
         self.provider_filters.extend(CADVISOR_PROVIDER_FILTERS)
         self.provider_filters.extend(NODE_EXPORTER_PROVIDER_FILTERS)
+        self.provider_filters.extend(TASMOTA_PROVIDER_FILTERS)
 
     def _get_or_create_resource(
         self, resources: dict, resource_name: str

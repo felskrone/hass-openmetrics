@@ -7,8 +7,13 @@ from homeassistant.components.sensor.const import SensorDeviceClass, SensorState
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfDataRate,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
     UnitOfInformation,
+    UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -24,14 +29,21 @@ from .const import (
     DOMAIN,
     METRIC_CPU_TEMP,
     METRIC_CPU_USAGE_PCT,
+    METRIC_CURRENT_AMPERES,
     METRIC_DEVICE_NAME,
     METRIC_DISK_USAGE_BYTES,
     METRIC_DISK_USAGE_PCT,
+    METRIC_ENERGY_DAILY_KWH,
+    METRIC_ENERGY_TOTAL_KWH,
     METRIC_MEMORY_USAGE_BYTES,
     METRIC_MEMORY_USAGE_PCT,
     METRIC_NETWORK_RECEIVE_BYTES,
     METRIC_NETWORK_TRANSMIT_BYTES,
+    METRIC_POWER_WATTS,
+    METRIC_RELAY_STATE,
     METRIC_UPTIME_SECONDS,
+    METRIC_VOLTAGE_VOLTS,
+    METRIC_WIFI_SIGNAL_DBM,
     PROPERTY_CPU_CORES,
     PROPERTY_DEVICE_MODEL,
     PROPERTY_DEVICE_SERIAL,
@@ -40,6 +52,8 @@ from .const import (
     PROPERTY_LAST_START_TIME,
     PROPERTY_MEMORY_SIZE,
     PROPERTY_NETWORK_SPEED,
+    PROPERTY_WIFI_BSSID,
+    PROPERTY_WIFI_SSID,
 )
 from .coordinator import OpenMetricsDataUpdateCoordinator
 from .entity import OpenMetricsBaseEntity, async_setup_entities, create_device_info
@@ -144,6 +158,66 @@ SENSORS = {
         icon="mdi:docker",
         translation_key=METRIC_VIRTUAL_RESOURCES,
     ),
+    METRIC_WIFI_SIGNAL_DBM: SensorEntityDescription(
+        key=METRIC_WIFI_SIGNAL_DBM,
+        icon="mdi:wifi",
+        device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+        suggested_display_precision=0,
+        translation_key=METRIC_WIFI_SIGNAL_DBM,
+    ),
+    METRIC_RELAY_STATE: SensorEntityDescription(
+        key=METRIC_RELAY_STATE,
+        icon="mdi:electric-switch",
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key=METRIC_RELAY_STATE,
+    ),
+    METRIC_VOLTAGE_VOLTS: SensorEntityDescription(
+        key=METRIC_VOLTAGE_VOLTS,
+        icon="mdi:sine-wave",
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        suggested_display_precision=1,
+        translation_key=METRIC_VOLTAGE_VOLTS,
+    ),
+    METRIC_CURRENT_AMPERES: SensorEntityDescription(
+        key=METRIC_CURRENT_AMPERES,
+        icon="mdi:current-ac",
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        suggested_display_precision=3,
+        translation_key=METRIC_CURRENT_AMPERES,
+    ),
+    METRIC_POWER_WATTS: SensorEntityDescription(
+        key=METRIC_POWER_WATTS,
+        icon="mdi:flash",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=1,
+        translation_key=METRIC_POWER_WATTS,
+    ),
+    METRIC_ENERGY_DAILY_KWH: SensorEntityDescription(
+        key=METRIC_ENERGY_DAILY_KWH,
+        icon="mdi:lightning-bolt",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=3,
+        translation_key=METRIC_ENERGY_DAILY_KWH,
+    ),
+    METRIC_ENERGY_TOTAL_KWH: SensorEntityDescription(
+        key=METRIC_ENERGY_TOTAL_KWH,
+        icon="mdi:lightning-bolt",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=3,
+        translation_key=METRIC_ENERGY_TOTAL_KWH,
+    ),
 }
 VIRTUAL_SENSORS = {
     METRIC_VIRTUAL_RESOURCE_STATUS: SensorEntityDescription(
@@ -222,6 +296,13 @@ def create_resource_sensors(
                     sensor = OpenMetricsSensor(
                         coordinator, desc, device_info, filesystem
                     )
+                    sensors.append(sensor)
+            elif key == METRIC_RELAY_STATE and resource.relays:
+                for relay in sorted(resource.relays):
+                    desc = create_modified_sensor_description(
+                        description, translation_placeholders={"relay": relay}
+                    )
+                    sensor = OpenMetricsSensor(coordinator, desc, device_info, relay)
                     sensors.append(sensor)
             # Create other sensors
             else:
@@ -404,4 +485,10 @@ class OpenMetricsSensor(OpenMetricsBaseEntity, SensorEntity):
                     if self.identity and self.identity in network_speed:
                         # Value of PROPERTY_NETWORK_SPEED is the translation key
                         return {PROPERTY_NETWORK_SPEED: network_speed[self.identity]}
+            # Set the WiFi station attributes
+            if self.entity_description.key == METRIC_WIFI_SIGNAL_DBM:
+                return {
+                    PROPERTY_WIFI_SSID: resource_data.get(PROPERTY_WIFI_SSID),
+                    PROPERTY_WIFI_BSSID: resource_data.get(PROPERTY_WIFI_BSSID),
+                }
             return None

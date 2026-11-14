@@ -5,6 +5,7 @@ from custom_components.openmetrics.providers.generic import GenericProvider
 from .base import MetricsProvider
 from .cadvisor import CADVISOR_VERSION_INFO, CadvisorProvider
 from .node_exporter import NODE_EXPORTER_BUILD_INFO, NodeExporterProvider
+from .tasmota import TASMOTA_INFO, TasmotaProvider
 
 
 class ProviderRegistry:
@@ -15,6 +16,7 @@ class ProviderRegistry:
         self.providers = {
             NODE_EXPORTER_BUILD_INFO: NodeExporterProvider(),
             CADVISOR_VERSION_INFO: CadvisorProvider(),
+            TASMOTA_INFO: TasmotaProvider(),
         }
         self.__default_provider = GenericProvider()
 
