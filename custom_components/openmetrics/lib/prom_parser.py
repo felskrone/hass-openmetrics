@@ -135,6 +135,18 @@ def _parse_sample(text: str) -> Sample:
         return Sample(name, {}, value, timestamp)
 
 
+def _has_non_numeric_value(line: str) -> bool:
+    """Return True if line is a sample with a (non-numeric) string value."""
+    if "}" in line:
+        rest = line[line.rindex("}") + 1 :]
+    elif "{" in line:
+        return False
+    else:
+        parts = line.split(None, 1)
+        rest = parts[1] if len(parts) > 1 else ""
+    return bool(rest.strip())
+
+
 def text_fd_to_metric_families(fd: TextIO) -> Iterable[Metric]:
     """Parse Prometheus text format from a file descriptor.
 
@@ -210,7 +222,13 @@ def text_fd_to_metric_families(fd: TextIO) -> Iterable[Metric]:
             # Ignore blank lines
             pass
         else:
-            sample = _parse_sample(line)
+            try:
+                sample = _parse_sample(line)
+            except ValueError:
+                # Skip samples with non-numeric values (e.g. string IDs)
+                if _has_non_numeric_value(line):
+                    continue
+                raise
             if sample.name not in allowed_names:
                 if name != "":
                     yield build_metric(name, documentation, typ, samples)

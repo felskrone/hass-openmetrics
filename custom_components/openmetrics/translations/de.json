@@ -162,6 +162,21 @@
             },
             "energy_total_kwh": {
                 "name": "Energie gesamt"
+            },
+            "meter_energy_import_kwh": {
+                "name": "Zähler Energie Bezug"
+            },
+            "meter_energy_export_kwh": {
+                "name": "Zähler Energie Einspeisung"
+            },
+            "meter_power_watts": {
+                "name": "Zähler Leistung"
+            },
+            "meter_phase_power_watts": {
+                "name": "Zähler Leistung Phase {phase}"
+            },
+            "meter_phase_voltage_volts": {
+                "name": "Zähler Spannung Phase {phase}"
             }
         }
     },
@@ -210,7 +225,12 @@
                 "current_amperes": "Stromstärke",
                 "power_watts": "Wirkleistung",
                 "energy_daily_kwh": "Energie heute",
-                "energy_total_kwh": "Energie gesamt"
+                "energy_total_kwh": "Energie gesamt",
+                "meter_energy_import_kwh": "Zähler Energie Bezug",
+                "meter_energy_export_kwh": "Zähler Energie Einspeisung",
+                "meter_power_watts": "Zähler Leistung",
+                "meter_phase_power_watts": "Zähler Leistung Phase {phase}",
+                "meter_phase_voltage_volts": "Zähler Spannung Phase {phase}"
             }
         }
     }

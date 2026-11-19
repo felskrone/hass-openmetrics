@@ -36,6 +36,11 @@ from .const import (
     METRIC_ENERGY_DAILY_KWH,
     METRIC_ENERGY_TOTAL_KWH,
     METRIC_MEMORY_USAGE_BYTES,
+    METRIC_METER_ENERGY_EXPORT_KWH,
+    METRIC_METER_ENERGY_IMPORT_KWH,
+    METRIC_METER_PHASE_POWER_WATTS,
+    METRIC_METER_PHASE_VOLTAGE_VOLTS,
+    METRIC_METER_POWER_WATTS,
     METRIC_MEMORY_USAGE_PCT,
     METRIC_NETWORK_RECEIVE_BYTES,
     METRIC_NETWORK_TRANSMIT_BYTES,
@@ -218,6 +223,51 @@ SENSORS = {
         suggested_display_precision=3,
         translation_key=METRIC_ENERGY_TOTAL_KWH,
     ),
+    METRIC_METER_ENERGY_IMPORT_KWH: SensorEntityDescription(
+        key=METRIC_METER_ENERGY_IMPORT_KWH,
+        icon="mdi:transmission-tower-export",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=3,
+        translation_key=METRIC_METER_ENERGY_IMPORT_KWH,
+    ),
+    METRIC_METER_ENERGY_EXPORT_KWH: SensorEntityDescription(
+        key=METRIC_METER_ENERGY_EXPORT_KWH,
+        icon="mdi:transmission-tower-import",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=3,
+        translation_key=METRIC_METER_ENERGY_EXPORT_KWH,
+    ),
+    METRIC_METER_POWER_WATTS: SensorEntityDescription(
+        key=METRIC_METER_POWER_WATTS,
+        icon="mdi:flash",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=0,
+        translation_key=METRIC_METER_POWER_WATTS,
+    ),
+    METRIC_METER_PHASE_POWER_WATTS: SensorEntityDescription(
+        key=METRIC_METER_PHASE_POWER_WATTS,
+        icon="mdi:flash",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=0,
+        translation_key=METRIC_METER_PHASE_POWER_WATTS,
+    ),
+    METRIC_METER_PHASE_VOLTAGE_VOLTS: SensorEntityDescription(
+        key=METRIC_METER_PHASE_VOLTAGE_VOLTS,
+        icon="mdi:sine-wave",
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        suggested_display_precision=1,
+        translation_key=METRIC_METER_PHASE_VOLTAGE_VOLTS,
+    ),
 }
 VIRTUAL_SENSORS = {
     METRIC_VIRTUAL_RESOURCE_STATUS: SensorEntityDescription(
@@ -303,6 +353,17 @@ def create_resource_sensors(
                         description, translation_placeholders={"relay": relay}
                     )
                     sensor = OpenMetricsSensor(coordinator, desc, device_info, relay)
+                    sensors.append(sensor)
+            elif (
+                key
+                in (METRIC_METER_PHASE_POWER_WATTS, METRIC_METER_PHASE_VOLTAGE_VOLTS)
+                and resource.phases
+            ):
+                for phase in sorted(resource.phases):
+                    desc = create_modified_sensor_description(
+                        description, translation_placeholders={"phase": phase}
+                    )
+                    sensor = OpenMetricsSensor(coordinator, desc, device_info, phase)
                     sensors.append(sensor)
             # Create other sensors
             else:

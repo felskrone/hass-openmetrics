@@ -13,6 +13,11 @@ from ..const import (
     METRIC_ENERGY_DAILY_KWH,
     METRIC_ENERGY_TOTAL_KWH,
     METRIC_POWER_WATTS,
+    METRIC_METER_ENERGY_EXPORT_KWH,
+    METRIC_METER_ENERGY_IMPORT_KWH,
+    METRIC_METER_PHASE_POWER_WATTS,
+    METRIC_METER_PHASE_VOLTAGE_VOLTS,
+    METRIC_METER_POWER_WATTS,
     METRIC_RELAY_STATE,
     METRIC_UPTIME_SECONDS,
     METRIC_VOLTAGE_VOLTS,
@@ -39,6 +44,17 @@ TASMOTA_ENERGY_CURRENT_AMPERES = "tasmota_energy_current_amperes"
 TASMOTA_ENERGY_POWER_ACTIVE_WATTS = "tasmota_energy_power_active_watts"
 TASMOTA_ENERGY_POWER_KILOWATTS_DAILY = "tasmota_energy_power_kilowatts_daily"
 TASMOTA_ENERGY_POWER_KILOWATTS_TOTAL = "tasmota_energy_power_kilowatts"
+
+TASMOTA_SENSOR_ENERGY_IMPORT = "tasmota_sensors_e_in_"
+TASMOTA_SENSOR_ENERGY_EXPORT = "tasmota_sensors_e_out_"
+TASMOTA_SENSOR_POWER = "tasmota_sensors_power_"
+# SML/OBIS smart meter phase values (e.g. Bitshake IR reader): x.7.0
+# 36/56/76 = active power L1/L2/L3, 32/52/72 = voltage L1/L2/L3
+TASMOTA_SENSOR_PHASE_POWER_REGEX = r"^tasmota_sensors_(36|56|76)_7_0_$"
+TASMOTA_SENSOR_PHASE_VOLTAGE_REGEX = r"^tasmota_sensors_(32|52|72)_7_0_$"
+TASMOTA_SENSOR_PHASES = {"36": "1", "56": "2", "76": "3", "32": "1", "52": "2", "72": "3"}
+TASMOTA_SENSOR_LABEL = "sensor"
+TASMOTA_SENSOR_LABEL_FILTER = {TASMOTA_SENSOR_LABEL: ".+"}
 
 # Regex
 TASMOTA_AT_LEAST_ONE_CHARACTER_REGEX = ".+"
@@ -90,6 +106,27 @@ class TasmotaProvider(MetricsProvider):
         MetricFilter(metric_key=TASMOTA_ENERGY_POWER_ACTIVE_WATTS),
         MetricFilter(metric_key=TASMOTA_ENERGY_POWER_KILOWATTS_DAILY),
         MetricFilter(metric_key=TASMOTA_ENERGY_POWER_KILOWATTS_TOTAL_REGEX),
+        # Smart meter (SML) sensors
+        MetricFilter(
+            metric_key=TASMOTA_SENSOR_ENERGY_IMPORT + "$",
+            label_filters=TASMOTA_SENSOR_LABEL_FILTER,
+        ),
+        MetricFilter(
+            metric_key=TASMOTA_SENSOR_ENERGY_EXPORT + "$",
+            label_filters=TASMOTA_SENSOR_LABEL_FILTER,
+        ),
+        MetricFilter(
+            metric_key=TASMOTA_SENSOR_POWER + "$",
+            label_filters=TASMOTA_SENSOR_LABEL_FILTER,
+        ),
+        MetricFilter(
+            metric_key=TASMOTA_SENSOR_PHASE_POWER_REGEX,
+            label_filters=TASMOTA_SENSOR_LABEL_FILTER,
+        ),
+        MetricFilter(
+            metric_key=TASMOTA_SENSOR_PHASE_VOLTAGE_REGEX,
+            label_filters=TASMOTA_SENSOR_LABEL_FILTER,
+        ),
     ]
 
     def __init__(self):
@@ -137,6 +174,13 @@ class TasmotaProvider(MetricsProvider):
                 if not resource_info.relays:
                     resource_info.relays = set()
                 resource_info.relays.add(relay_index)
+            match = re.match(
+                TASMOTA_SENSOR_PHASE_POWER_REGEX, family.name
+            ) or re.match(TASMOTA_SENSOR_PHASE_VOLTAGE_REGEX, family.name)
+            if match:
+                if not resource_info.phases:
+                    resource_info.phases = set()
+                resource_info.phases.add(TASMOTA_SENSOR_PHASES[match.group(1)])
 
     def collect_supported_metric(self, family: Metric, available_metrics: list[str]):
         """Collect supported metrics."""
@@ -156,6 +200,24 @@ class TasmotaProvider(MetricsProvider):
             self._add_str_to_list_uniquely(METRIC_ENERGY_DAILY_KWH, available_metrics)
         elif re.match(TASMOTA_ENERGY_POWER_KILOWATTS_TOTAL_REGEX, family.name):
             self._add_str_to_list_uniquely(METRIC_ENERGY_TOTAL_KWH, available_metrics)
+        elif family.name == TASMOTA_SENSOR_ENERGY_IMPORT:
+            self._add_str_to_list_uniquely(
+                METRIC_METER_ENERGY_IMPORT_KWH, available_metrics
+            )
+        elif family.name == TASMOTA_SENSOR_ENERGY_EXPORT:
+            self._add_str_to_list_uniquely(
+                METRIC_METER_ENERGY_EXPORT_KWH, available_metrics
+            )
+        elif family.name == TASMOTA_SENSOR_POWER:
+            self._add_str_to_list_uniquely(METRIC_METER_POWER_WATTS, available_metrics)
+        elif re.match(TASMOTA_SENSOR_PHASE_POWER_REGEX, family.name):
+            self._add_str_to_list_uniquely(
+                METRIC_METER_PHASE_POWER_WATTS, available_metrics
+            )
+        elif re.match(TASMOTA_SENSOR_PHASE_VOLTAGE_REGEX, family.name):
+            self._add_str_to_list_uniquely(
+                METRIC_METER_PHASE_VOLTAGE_VOLTS, available_metrics
+            )
 
         # Add device name metric
         self._add_str_to_list_uniquely(METRIC_DEVICE_NAME, available_metrics)
@@ -247,6 +309,31 @@ class TasmotaProvider(MetricsProvider):
             sensor_metrics[METRIC_ENERGY_TOTAL_KWH] = metrics[
                 TASMOTA_ENERGY_POWER_KILOWATTS_TOTAL
             ]
+
+        # Smart meter metrics
+        if TASMOTA_SENSOR_ENERGY_IMPORT in metrics:
+            sensor_metrics[METRIC_METER_ENERGY_IMPORT_KWH] = metrics[
+                TASMOTA_SENSOR_ENERGY_IMPORT
+            ]
+        if TASMOTA_SENSOR_ENERGY_EXPORT in metrics:
+            sensor_metrics[METRIC_METER_ENERGY_EXPORT_KWH] = metrics[
+                TASMOTA_SENSOR_ENERGY_EXPORT
+            ]
+        if TASMOTA_SENSOR_POWER in metrics:
+            sensor_metrics[METRIC_METER_POWER_WATTS] = metrics[TASMOTA_SENSOR_POWER]
+        for metric_key, metric_value in metrics.items():
+            match = re.match(TASMOTA_SENSOR_PHASE_POWER_REGEX, metric_key)
+            if match:
+                phase = TASMOTA_SENSOR_PHASES[match.group(1)]
+                sensor_metrics[f"{METRIC_METER_PHASE_POWER_WATTS}_{phase}"] = (
+                    metric_value
+                )
+            match = re.match(TASMOTA_SENSOR_PHASE_VOLTAGE_REGEX, metric_key)
+            if match:
+                phase = TASMOTA_SENSOR_PHASES[match.group(1)]
+                sensor_metrics[f"{METRIC_METER_PHASE_VOLTAGE_VOLTS}_{phase}"] = (
+                    metric_value
+                )
 
         # Relay state metrics
         for metric_key, metric_value in metrics.items():

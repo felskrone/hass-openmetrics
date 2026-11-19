@@ -162,6 +162,21 @@
             },
             "energy_total_kwh": {
                 "name": "Energy total"
+            },
+            "meter_energy_import_kwh": {
+                "name": "Meter energy import"
+            },
+            "meter_energy_export_kwh": {
+                "name": "Meter energy export"
+            },
+            "meter_power_watts": {
+                "name": "Meter power"
+            },
+            "meter_phase_power_watts": {
+                "name": "Meter power phase {phase}"
+            },
+            "meter_phase_voltage_volts": {
+                "name": "Meter voltage phase {phase}"
             }
         }
     },
@@ -210,7 +225,12 @@
                 "current_amperes": "Current",
                 "power_watts": "Active power",
                 "energy_daily_kwh": "Energy daily",
-                "energy_total_kwh": "Energy total"
+                "energy_total_kwh": "Energy total",
+                "meter_energy_import_kwh": "Meter energy import",
+                "meter_energy_export_kwh": "Meter energy export",
+                "meter_power_watts": "Meter power",
+                "meter_phase_power_watts": "Meter power phase {phase}",
+                "meter_phase_voltage_volts": "Meter voltage phase {phase}"
             }
         }
     }

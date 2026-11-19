@@ -28,6 +28,7 @@ class ResourceInfoData:
     network_interfaces: set[str] | None = None
     filesystems: dict[str, Any] | None = None
     relays: set[str] | None = None
+    phases: set[str] | None = None
 
 
 @dataclass
