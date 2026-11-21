@@ -310,8 +310,11 @@ class TasmotaProvider(MetricsProvider):
                 TASMOTA_ENERGY_POWER_KILOWATTS_TOTAL
             ]
 
-        # Smart meter metrics
-        if TASMOTA_SENSOR_ENERGY_IMPORT in metrics:
+        # Smart meter metrics (ignore transient 0.0 counter reads before SML UART sync)
+        if (
+            TASMOTA_SENSOR_ENERGY_IMPORT in metrics
+            and metrics[TASMOTA_SENSOR_ENERGY_IMPORT] > 0
+        ):
             sensor_metrics[METRIC_METER_ENERGY_IMPORT_KWH] = metrics[
                 TASMOTA_SENSOR_ENERGY_IMPORT
             ]
